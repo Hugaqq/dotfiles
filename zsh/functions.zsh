@@ -1,5 +1,29 @@
 # ~/dotfiles/zsh/functions.zsh — 自定义函数（由 ~/.zshrc 加载）
 
+# --- 创建文件后复用 VS Code 窗口；已有文件不覆盖、不修改时间戳 ---
+cnew() {
+  if (( $# != 1 )) || [[ -z $1 || $1 == -* ]]; then
+    print -u2 '用法：cnew 路径/文件名（以 - 开头的文件请写 ./文件名）'
+    return 2
+  fi
+  if [[ -d $1 || -L $1 ]]; then
+    print -u2 -- "拒绝创建：目录或符号链接 $1"
+    return 1
+  fi
+  if [[ ! -e $1 ]]; then
+    ( setopt NO_CLOBBER; : > "$1" ) || return
+  fi
+  command code --reuse-window -- "$1"
+}
+
+# 兼容原习惯：code 新文件.md 会先创建；其余参数保持原生行为。
+code() {
+  if [[ $# -eq 1 && $1 != -* && ( $1 == *.md || $1 == *.markdown ) && ! -e $1 && ! -L $1 ]]; then
+    ( setopt NO_CLOBBER; : > "$1" ) || return
+  fi
+  command code "$@"
+}
+
 # --- 创建目录并进入 ---
 mcd() { mkdir -p "$1" && cd "$1"; }
 
