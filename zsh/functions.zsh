@@ -31,25 +31,32 @@ conda-init() {
   conda activate "${1:-base}"
 }
 
-# --- codex 走固定本地代理入口 ---
+# --- codex：跟随系统代理（与桌面 App 一致），可用 CODEX_PROXY 覆盖 ---
 codex() {
-  local codex_proxy_url="http://127.0.0.1:17890"
+  local proxy="${CODEX_PROXY:-}"
 
-  if ! /usr/bin/nc -z -w 2 127.0.0.1 17890 >/dev/null 2>&1; then
-    echo "固定本地代理入口 127.0.0.1:17890 不可用"
-    return 1
+  if [[ -z $proxy ]]; then
+    proxy=$(scutil --proxy 2>/dev/null | awk -F' *: *' '
+      /HTTPSEnable/ { en = $2 }
+      /HTTPSProxy/  { host = $2 }
+      /HTTPSPort/   { port = $2 }
+      END { if (en == 1 && host != "" && port != "") print host ":" port }')
   fi
 
-  env \
-    HTTP_PROXY="$codex_proxy_url" \
-    HTTPS_PROXY="$codex_proxy_url" \
-    ALL_PROXY="$codex_proxy_url" \
-    NO_PROXY="localhost,127.0.0.1,::1" \
-    http_proxy="$codex_proxy_url" \
-    https_proxy="$codex_proxy_url" \
-    all_proxy="$codex_proxy_url" \
-    no_proxy="localhost,127.0.0.1,::1" \
+  if [[ -n $proxy ]]; then
+    env \
+      HTTP_PROXY="http://$proxy" \
+      HTTPS_PROXY="http://$proxy" \
+      ALL_PROXY="http://$proxy" \
+      NO_PROXY="localhost,127.0.0.1,::1" \
+      http_proxy="http://$proxy" \
+      https_proxy="http://$proxy" \
+      all_proxy="http://$proxy" \
+      no_proxy="localhost,127.0.0.1,::1" \
+      "$HOME/.local/bin/codex-math" "$@"
+  else
     "$HOME/.local/bin/codex-math" "$@"
+  fi
 }
 
 # --- ZJU Connect LaunchAgent 管理 ---
