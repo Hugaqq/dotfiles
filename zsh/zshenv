@@ -1,0 +1,30 @@
+# ~/.zshenv — 所有 zsh（含脚本、vim、tmux）都会读取，保持轻量。
+# 只放环境变量；交互配置在 ~/.zshrc，登录配置在 ~/.zprofile。
+
+typeset -U path PATH            # 关键：PATH 自动去重，嵌套 shell 不会越叠越长
+
+path=(
+  $HOME/.local/bin
+  $HOME/.npm-global/bin
+  $HOME/.kimi-code/bin
+  $HOME/.antigravity/antigravity/bin
+  $HOME/.antigravity-ide/antigravity-ide/bin
+  /opt/homebrew/opt/rustup/bin
+  /opt/homebrew/bin
+  /opt/homebrew/sbin
+  $path
+)
+export PATH
+
+# 编辑器与分页器
+export EDITOR=vim
+export VISUAL=vim
+export PAGER=less
+export LESS='-R -F -X'
+
+# bat 使用终端自身配色（iTerm2 里的 Catppuccin 会直接生效）
+export BAT_THEME=ansi
+
+# Homebrew
+export HOMEBREW_INSTALL_FROM_API=1
+export HOMEBREW_NO_ANALYTICS=1

@@ -1,0 +1,133 @@
+# ~/.zshrc — 仅交互式 shell 生效（软链接到 ~/dotfiles/zsh/zshrc）
+# 环境变量见 ~/.zshenv，登录配置见 ~/.zprofile。
+
+[[ -o interactive ]] || return
+
+# ============================================================
+# 1. 历史记录
+# ============================================================
+HISTSIZE=100000
+SAVEHIST=100000
+HISTFILE=~/.zsh_history
+
+setopt EXTENDED_HISTORY       # 记录时间戳与执行耗时
+setopt INC_APPEND_HISTORY     # 命令立即落盘，异常退出也不丢
+setopt SHARE_HISTORY          # 多窗口 / tmux pane 之间实时共享
+setopt HIST_IGNORE_ALL_DUPS   # 重复命令只保留最后一次
+setopt HIST_IGNORE_SPACE      # 空格开头的命令不记录（放临时敏感命令）
+setopt HIST_REDUCE_BLANKS
+setopt HIST_VERIFY            # 历史展开先确认再执行
+
+# ============================================================
+# 2. 基础交互选项
+# ============================================================
+setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS   # 目录名直接进入；cd 自动入栈
+setopt EXTENDED_GLOB                          # 扩展通配
+setopt COMPLETE_IN_WORD ALWAYS_TO_END         # 光标停在词中也能补全
+setopt INTERACTIVE_COMMENTS                   # 交互输入里可写 # 注释
+setopt NO_BEEP
+unsetopt FLOW_CONTROL                         # 释放 Ctrl-S / Ctrl-Q
+
+bindkey -e                                    # Emacs 键位
+
+# ============================================================
+# 3. 补全
+# ============================================================
+fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit                                    # 缓存超过 24h 才全量重建
+else
+  compinit -C
+fi
+
+# 大小写不敏感 + 分段模糊匹配（配合 fzf-tab）
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
+# ============================================================
+# 4. 插件（antidote 自动生成并缓存静态文件）
+# ============================================================
+export ZSH_AUTOSUGGEST_USE_ASYNC=1   # 必须在插件加载前设置
+source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+antidote load
+
+# ============================================================
+# 5. fzf
+# ============================================================
+export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
+export FZF_DEFAULT_OPTS="--height 45% --layout=reverse --border --info=inline --prompt='❯ '"
+export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :200 {}'"
+export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons --group-directories-first {}' --preview-window=right:60%"
+source <(fzf --zsh)
+
+# fzf-tab 预览（Ctrl-R 历史、Tab 补全都走 fzf）
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --tree --level=2 --icons --group-directories-first $realpath'
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview \
+  '[[ $group == "[process ID]" ]] && ps -p $word -o comm="" -w'
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
+zstyle ':fzf-tab:complete:(-command-|-parameter-|-variable-):*' fzf-preview 'echo ${(P)word}'
+
+# ============================================================
+# 6. zoxide（保留 z / zi，不改写 cd）
+# ============================================================
+eval "$(zoxide init zsh)"
+
+# ============================================================
+# 7. 别名
+# ============================================================
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -lh --icons --group-directories-first'
+alias la='eza -la --icons --group-directories-first'
+alias lt='eza --tree --level=2 --icons --group-directories-first'
+alias tree='eza --tree --icons'
+alias cat='bat --paging=never'          # 管道中自动退化为 cat
+alias ex='extract'                      # ohmyzsh/extract 插件
+alias rm='rm -i'
+alias python='python3'
+
+# git
+alias gs='git status -sb'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git log --oneline --graph --decorate -20'
+alias gd='git diff'
+
+# 配置文件
+alias sz='source ~/.zshrc'
+alias ez='vim ~/dotfiles/zsh/zshrc'
+alias ef='vim ~/dotfiles/zsh/functions.zsh'
+alias ep='vim ~/dotfiles/.zsh_plugins.txt'
+alias ev='vim ~/dotfiles/.vimrc'
+
+alias vmake='/Users/qvanium/Desktop/sys1/vivado-on-silicon-mac-main/scripts/sys1-vivado.sh'
+
+# ============================================================
+# 8. 键位（macOS：Option / Ctrl + 方向键）
+# ============================================================
+bindkey '^[[1;9D' backward-word
+bindkey '^[[1;9C' forward-word
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;3C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+bindkey '^[^?'    backward-kill-word
+bindkey '^[[3;9~' kill-word
+bindkey '^[[3;5~' kill-word
+bindkey '^[[H'    beginning-of-line
+bindkey '^[[F'    end-of-line
+bindkey '^[[1~'   beginning-of-line
+bindkey '^[[4~'   end-of-line
+bindkey '^[[3~'   delete-char
+bindkey '^[[Z'    reverse-menu-complete
+
+# ============================================================
+# 9. 自定义函数与机器私有配置
+# ============================================================
+[[ -f ~/dotfiles/zsh/functions.zsh ]] && source ~/dotfiles/zsh/functions.zsh
+[[ -f ~/dotfiles/zsh/local.zsh ]]     && source ~/dotfiles/zsh/local.zsh
+
+# ============================================================
+# 10. 提示符（必须放在最后）
+# ============================================================
+eval "$(starship init zsh)"

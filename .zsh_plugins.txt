@@ -1,0 +1,8 @@
+zsh-users/zsh-autosuggestions
+zsh-users/zsh-syntax-highlighting
+zsh-users/zsh-completions
+# 即使你不用 Oh My Zsh 框架，也可以直接引用它的优质插件
+ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/extract
+
+Aloxaf/fzf-tab

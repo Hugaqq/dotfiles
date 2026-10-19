@@ -1,0 +1,16 @@
+# ~/.zprofile — 登录 shell 执行一次。Homebrew 环境与镜像源只在这里定义。
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# 去掉 brew shellenv 可能重复加入的 /opt/homebrew/bin 与 sbin
+typeset -U path PATH
+path=($path)
+export PATH
+
+# 国内镜像（与 .zshrc 中的旧配置合并为一处）
+export HOMEBREW_API_DOMAIN="https://mirrors.aliyun.com/homebrew/homebrew-bottles/api"
+export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.aliyun.com/homebrew/homebrew-bottles"
+export HOMEBREW_PIP_INDEX_URL="http://mirrors.aliyun.com/pypi/simple"
+
+# OrbStack CLI 集成
+[[ -f "$HOME/.orbstack/shell/init.zsh" ]] && source "$HOME/.orbstack/shell/init.zsh"
