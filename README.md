@@ -56,6 +56,16 @@ install.sh
 | bat | `cat` 带语法高亮 | 用系统 `cat` |
 | ripgrep | fzf 找文件时更快 | 用 fzf 默认的查找 |
 
+## Claude Code（可选）
+
+`claude/ghostty-bell.sh` 是一个 Claude Code hook：在 Ghostty 里，Claude Code 请求权限或一轮结束时，
+对应标签页标题前会出现 🔔、Dock 图标跳一下，切回该标签页后消失。不在 Ghostty 里时什么都不做。
+在 `~/.claude/settings.json` 的 `hooks` 里给 `PermissionRequest` 和 `Stop` 加上：
+
+```json
+{ "type": "command", "command": "~/dotfiles/claude/ghostty-bell.sh", "timeout": 5 }
+```
+
 ## 机器私有配置
 
 只属于某台机器的东西不要写进 `zshrc`：
