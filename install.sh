@@ -69,7 +69,7 @@ done
 
 echo "可选工具（没装也能用，装了体验更好）："
 missing=""
-for t in zsh starship fzf zoxide eza bat rg tmux; do
+for t in zsh starship fzf zoxide eza bat rg tmux mise; do
   if command -v "$t" >/dev/null || { [ "$t" = bat ] && command -v batcat >/dev/null; }; then
     echo "  有  $t"
   else

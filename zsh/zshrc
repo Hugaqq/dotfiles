@@ -78,6 +78,9 @@ unfunction _plugin
 # zoxide：提供 z / zi，不改写 cd
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
 
+# mise：进入带 mise.toml 的目录时自动切换 node / python 等版本，离开后恢复
+(( $+commands[mise] )) && eval "$(mise activate zsh)"
+
 # ---------------- 5. 别名 ----------------
 if (( $+commands[eza] )); then
   alias ls='eza --group-directories-first'

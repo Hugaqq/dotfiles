@@ -55,6 +55,7 @@ install.sh
 | eza | `ls` / `ll` / `la` / `lt` | 用系统 `ls` |
 | bat | `cat` 带语法高亮 | 用系统 `cat` |
 | ripgrep | fzf 找文件时更快 | 用 fzf 默认的查找 |
+| mise | 按项目自动切换 node / python 等版本（项目里放 `mise.toml`） | 用系统里装的版本 |
 
 ## Claude Code（可选）
 
