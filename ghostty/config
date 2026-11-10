@@ -1,0 +1,17 @@
+# Ghostty 配置 — macOS / Linux 通用。改完按 Cmd+Shift+,（Linux: Ctrl+Shift+,）重载。
+# 换主题：终端里执行 `ghostty +list-themes` 可以带预览地挑，然后改下面这一行。
+
+theme = GitHub Dark Dimmed
+
+# 不指定 font-family：用 Ghostty 内置的 JetBrains Mono，任何机器上都一样，不用装字体
+font-size = 14
+
+window-padding-x = 10
+window-padding-y = 8
+mouse-hide-while-typing = true
+
+# 左 Option 当 Alt 用（Alt-C 跳目录、Alt-. 取上条命令的参数），右 Option 仍可输入特殊字符
+macos-option-as-alt = left
+
+# SSH 到没有 Ghostty terminfo 的机器时自动把 TERM 降级为 xterm-256color，避免 "unknown terminal type"
+shell-integration-features = ssh-env

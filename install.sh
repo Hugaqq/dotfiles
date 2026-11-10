@@ -48,6 +48,7 @@ link zsh/zprofile   .zprofile
 link zsh/zshrc      .zshrc
 link tmux/tmux.conf .tmux.conf
 link .vimrc         .vimrc
+link ghostty/config .config/ghostty/config
 
 echo "zsh 插件："
 if command -v git >/dev/null; then

@@ -1,6 +1,6 @@
 # dotfiles
 
-一份可以直接搬到任何 macOS / Linux 机器上的终端配置：zsh、tmux、starship、vim。
+一份可以直接搬到任何 macOS / Linux 机器上的终端配置：zsh、tmux、starship、vim、Ghostty。
 
 - **极简**：单行提示符（路径、git 分支、状态），只用终端自带的 16 色，不需要 Nerd Font。
 - **可移植**：所有外部工具都是"装了才用"，一台只有 zsh 和 git 的机器也能正常启动。
@@ -33,10 +33,17 @@ zsh/
   local.zsh      # 这台机器私有的别名、函数（git 忽略）
   local.zshenv   # 这台机器私有的 PATH、环境变量（git 忽略）
 tmux/tmux.conf   # C-a 前缀、鼠标、vi 复制模式
+ghostty/config   # 终端模拟器：主题、字号（Ghostty，macOS / Linux 通用）
 starship.toml    # 提示符
-.vimrc
+.vimrc           # 不装插件也能用；装了 vim-plug 后插件自动生效
 install.sh
 ```
+
+## 外观
+
+提示符、tmux、vim 都只用终端自带的 16 色，所以整体配色只由终端模拟器决定。
+用 Ghostty 的话改 `ghostty/config` 里的 `theme` 一行即可（`ghostty +list-themes` 可以带预览地挑）；
+用别的终端就在那个终端里换主题，其余部分会自动跟着变。
 
 ## 可选工具
 
