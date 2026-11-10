@@ -1,5 +1,6 @@
 # 机器私有配置不提交
 zsh/local.zsh
+zsh/local.zshenv
 
 # macOS
 .DS_Store

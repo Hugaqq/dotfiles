@@ -1,91 +1,101 @@
-# ~/.zshrc — 仅交互式 shell 生效（软链接到 ~/dotfiles/zsh/zshrc）
-# 环境变量见 ~/.zshenv，登录配置见 ~/.zprofile。
+# zshrc — 仅交互式 shell。环境变量见 zshenv，登录配置见 zprofile。
+# 所有外部工具（starship / fzf / zoxide / eza / bat）都是"装了才用"，
+# 没装也能正常启动，所以同一份配置可以直接放到任何 macOS / Linux 机器上。
 
 [[ -o interactive ]] || return
 
-# ============================================================
-# 1. 历史记录
-# ============================================================
+DOTFILES=${${(%):-%N}:A:h:h}                  # 仓库位置（由软链接反推，不写死路径）
+
+# ---------------- 1. 历史 ----------------
+HISTFILE=~/.zsh_history
 HISTSIZE=100000
 SAVEHIST=100000
-HISTFILE=~/.zsh_history
-
-setopt EXTENDED_HISTORY       # 记录时间戳与执行耗时
-setopt INC_APPEND_HISTORY     # 命令立即落盘，异常退出也不丢
-setopt SHARE_HISTORY          # 多窗口 / tmux pane 之间实时共享
+setopt EXTENDED_HISTORY       # 记录时间戳与耗时
+setopt SHARE_HISTORY          # 立即落盘，多窗口 / tmux pane 实时共享
 setopt HIST_IGNORE_ALL_DUPS   # 重复命令只保留最后一次
-setopt HIST_IGNORE_SPACE      # 空格开头的命令不记录（放临时敏感命令）
+setopt HIST_IGNORE_SPACE      # 空格开头的命令不记录
 setopt HIST_REDUCE_BLANKS
 setopt HIST_VERIFY            # 历史展开先确认再执行
 
-# ============================================================
-# 2. 基础交互选项
-# ============================================================
-setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS   # 目录名直接进入；cd 自动入栈
-setopt EXTENDED_GLOB                          # 扩展通配
-setopt COMPLETE_IN_WORD ALWAYS_TO_END         # 光标停在词中也能补全
-setopt INTERACTIVE_COMMENTS                   # 交互输入里可写 # 注释
+# ---------------- 2. 交互选项 ----------------
+setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS
+setopt EXTENDED_GLOB
+setopt COMPLETE_IN_WORD ALWAYS_TO_END
+setopt INTERACTIVE_COMMENTS
 setopt NO_BEEP
 unsetopt FLOW_CONTROL                         # 释放 Ctrl-S / Ctrl-Q
-
 bindkey -e                                    # Emacs 键位
 
-# ============================================================
-# 3. 补全
-# ============================================================
-fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+# ---------------- 3. 补全 ----------------
+for _d in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+  [[ -d $_d/share/zsh/site-functions ]] && fpath=($_d/share/zsh/site-functions $fpath)
+done
+unset _d
+
 autoload -Uz compinit
-if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
-  compinit                                    # 缓存超过 24h 才全量重建
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh-24) ]]; then
+  compinit -C                                 # 24h 内直接用缓存
 else
-  compinit -C
+  compinit && touch ${ZDOTDIR:-$HOME}/.zcompdump   # 每天最多全量检查一次
 fi
 
-# 大小写不敏感 + 分段模糊匹配（配合 fzf-tab）
+# 大小写不敏感 + 分段模糊匹配
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 
-# ============================================================
-# 4. 插件（antidote 自动生成并缓存静态文件）
-# ============================================================
-export ZSH_AUTOSUGGEST_USE_ASYNC=1   # 必须在插件加载前设置
-source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
-antidote load
+# ---------------- 4. 插件与 fzf ----------------
+# 插件由 install.sh 克隆到这里；不存在就跳过。顺序有讲究：
+# fzf-tab → fzf 键位 → autosuggestions → syntax-highlighting（必须最后）
+ZPLUGINS=${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins
+_plugin() { [[ -r $ZPLUGINS/$1 ]] && source $ZPLUGINS/$1 }
 
-# ============================================================
-# 5. fzf
-# ============================================================
-export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
-export FZF_DEFAULT_OPTS="--height 45% --layout=reverse --border --info=inline --prompt='❯ '"
-export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :200 {}'"
-export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons --group-directories-first {}' --preview-window=right:60%"
-source <(fzf --zsh)
+if (( $+commands[fzf] )); then
+  (( $+commands[rg] )) && export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
+  export FZF_DEFAULT_OPTS='--height 45% --layout=reverse --border --info=inline'
+  (( $+commands[bat] )) && export FZF_CTRL_T_OPTS="--preview 'bat --style=plain --color=always --line-range :200 {}'"
 
-# fzf-tab 预览（Ctrl-R 历史、Tab 补全都走 fzf）
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --tree --level=2 --icons --group-directories-first $realpath'
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview \
-  '[[ $group == "[process ID]" ]] && ps -p $word -o comm="" -w'
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
-zstyle ':fzf-tab:complete:(-command-|-parameter-|-variable-):*' fzf-preview 'echo ${(P)word}'
+  _plugin fzf-tab/fzf-tab.plugin.zsh
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 $realpath'
 
-# ============================================================
-# 6. zoxide（保留 z / zi，不改写 cd）
-# ============================================================
-eval "$(zoxide init zsh)"
+  if [[ -t 0 ]]; then                         # 没有终端时（被工具调起）不装键位，避免报错
+    if _init=$(fzf --zsh 2>/dev/null); then   # fzf ≥ 0.48
+      eval "$_init"
+    else                                      # 发行版自带的旧版 fzf
+      for _f in /usr/share/doc/fzf/examples/{key-bindings,completion}.zsh \
+                /usr/share/fzf/{key-bindings,completion}.zsh; do
+        [[ -r $_f ]] && source $_f
+      done
+    fi
+    unset _init _f
+  fi
+fi
 
-# ============================================================
-# 7. 别名
-# ============================================================
-alias ls='eza --icons --group-directories-first'
-alias ll='eza -lh --icons --group-directories-first'
-alias la='eza -la --icons --group-directories-first'
-alias lt='eza --tree --level=2 --icons --group-directories-first'
-alias tree='eza --tree --icons'
-alias cat='bat --paging=never'          # 管道中自动退化为 cat
-alias ex='extract'                      # ohmyzsh/extract 插件
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=40            # 粘贴长文本时不卡
+ZSH_HIGHLIGHT_MAXLENGTH=300
+_plugin zsh-autosuggestions/zsh-autosuggestions.zsh
+_plugin zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+unfunction _plugin
+
+# zoxide：提供 z / zi，不改写 cd
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
+
+# ---------------- 5. 别名 ----------------
+if (( $+commands[eza] )); then
+  alias ls='eza --group-directories-first'
+  alias ll='eza -lh --group-directories-first'
+  alias la='eza -lah --group-directories-first'
+  alias lt='eza --tree --level=2 --group-directories-first'
+else
+  if ls --color=auto -d / &>/dev/null; then alias ls='ls --color=auto'; else alias ls='ls -G'; fi
+  alias ll='ls -lh'
+  alias la='ls -lAh'
+fi
+
+(( $+commands[batcat] && ! $+commands[bat] )) && alias bat=batcat   # Debian/Ubuntu 的包名
+(( $+commands[bat] || $+commands[batcat] )) && alias cat='bat --paging=never --style=plain'
+
+(( $+commands[python] )) || alias python=python3
 alias rm='rm -i'
-alias python='python3'
 
-# git
 alias gs='git status -sb'
 alias ga='git add'
 alias gc='git commit -m'
@@ -93,18 +103,12 @@ alias gp='git push'
 alias gl='git log --oneline --graph --decorate -20'
 alias gd='git diff'
 
-# 配置文件
-alias sz='source ~/.zshrc'
-alias ez='vim ~/dotfiles/zsh/zshrc'
-alias ef='vim ~/dotfiles/zsh/functions.zsh'
-alias ep='vim ~/dotfiles/.zsh_plugins.txt'
-alias ev='vim ~/dotfiles/.vimrc'
+alias sz='exec zsh'                           # 重新加载配置
+alias ez='$EDITOR $DOTFILES/zsh/zshrc'
+alias ef='$EDITOR $DOTFILES/zsh/functions.zsh'
+alias el='$EDITOR $DOTFILES/zsh/local.zsh'
 
-alias vmake='/Users/qvanium/Desktop/sys1/vivado-on-silicon-mac-main/scripts/sys1-vivado.sh'
-
-# ============================================================
-# 8. 键位（macOS：Option / Ctrl + 方向键）
-# ============================================================
+# ---------------- 6. 键位（Option / Ctrl + 方向键按词移动） ----------------
 bindkey '^[[1;9D' backward-word
 bindkey '^[[1;9C' forward-word
 bindkey '^[[1;3D' backward-word
@@ -121,17 +125,21 @@ bindkey '^[[4~'   end-of-line
 bindkey '^[[3~'   delete-char
 bindkey '^[[Z'    reverse-menu-complete
 
-# ============================================================
-# 9. 自定义函数与机器私有配置
-# ============================================================
-[[ -f ~/dotfiles/zsh/functions.zsh ]] && source ~/dotfiles/zsh/functions.zsh
-[[ -f ~/dotfiles/zsh/local.zsh ]]     && source ~/dotfiles/zsh/local.zsh
+# ---------------- 7. 函数与机器私有配置 ----------------
+[[ -r $DOTFILES/zsh/functions.zsh ]] && source $DOTFILES/zsh/functions.zsh
+[[ -r $DOTFILES/zsh/local.zsh ]]     && source $DOTFILES/zsh/local.zsh
 
-# ============================================================
-# 10. 提示符（必须放在最后）
-# ============================================================
-eval "$(starship init zsh)"
-
-
-# Added by Antigravity CLI installer
-export PATH="/Users/qvanium/.local/bin:$PATH"
+# ---------------- 8. 提示符（放最后） ----------------
+if (( $+commands[starship] )) && [[ $TERM != dumb ]]; then
+  export STARSHIP_CONFIG=$DOTFILES/starship.toml
+  eval "$(starship init zsh)"
+else
+  # 没装 starship 时的纯 zsh 提示符，长得基本一样
+  autoload -Uz vcs_info add-zsh-hook
+  zstyle ':vcs_info:*' enable git
+  zstyle ':vcs_info:git:*' formats ' %F{magenta}%b%f'
+  add-zsh-hook precmd vcs_info
+  setopt PROMPT_SUBST
+  PROMPT='%F{blue}%~%f${vcs_info_msg_0_} %(?.%F{green}.%F{red})%(!.#.❯)%f '
+  [[ -n $SSH_CONNECTION ]] && PROMPT="%F{yellow}%n@%m%f $PROMPT"   # SSH 时显示 用户@主机
+fi

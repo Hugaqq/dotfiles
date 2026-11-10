@@ -1,4 +1,15 @@
-# ~/dotfiles/zsh/functions.zsh — 自定义函数（由 ~/.zshrc 加载）
+# functions.zsh — 自定义函数（由 zshrc 加载）
+
+# --- 创建目录并进入 ---
+mcd() { mkdir -p "$1" && cd "$1" }
+
+# --- 编译并运行单个 C 文件 ---
+runc() { ${CC:-cc} -Wall -g "$1" -o "${1%.*}" && ./"${1%.*}" }
+
+# --- 生成汇编 ---
+checkasm() {
+  ${CC:-cc} -S -O0 -fverbose-asm "$1" -o "${1%.*}.s" && echo "Assembly generated at ${1%.*}.s"
+}
 
 # --- 创建文件后复用 VS Code 窗口；已有文件不覆盖、不修改时间戳 ---
 cnew() {
@@ -16,49 +27,38 @@ cnew() {
   command code --reuse-window -- "$1"
 }
 
-# 兼容原习惯：code 新文件.md 会先创建；其余参数保持原生行为。
-code() {
-  if [[ $# -eq 1 && $1 != -* && ( $1 == *.md || $1 == *.markdown ) && ! -e $1 && ! -L $1 ]]; then
-    ( setopt NO_CLOBBER; : > "$1" ) || return
-  fi
-  command code "$@"
-}
+# code 新文件.md 会先创建文件；其余参数保持原生行为。
+if (( $+commands[code] )); then
+  code() {
+    if [[ $# -eq 1 && $1 != -* && ( $1 == *.md || $1 == *.markdown ) && ! -e $1 && ! -L $1 ]]; then
+      ( setopt NO_CLOBBER; : > "$1" ) || return
+    fi
+    command code "$@"
+  }
+fi
 
-# --- 创建目录并进入 ---
-mcd() { mkdir -p "$1" && cd "$1"; }
-
-# --- 编译并运行单个 C 文件 ---
-runc() { gcc -Wall -g "$1" -o "${1%.*}" && ./"${1%.*}" }
-
-# --- 生成汇编 ---
-checkasm() {
-  gcc -S -O0 -fverbose-asm "$1" -o "${1%.*}.s"
-  echo "Assembly generated at ${1%.*}.s"
-}
-
-# --- nvm 懒加载：首次调用 nvm 时才加载，省掉每次开 shell 的 0.2s ---
+# --- nvm 懒加载：首次调用 nvm 时才加载，不拖慢每次开 shell ---
 nvm() {
   unfunction nvm
-  export NVM_DIR="$HOME/.nvm"
-  [[ -s /opt/homebrew/opt/nvm/nvm.sh ]] && source /opt/homebrew/opt/nvm/nvm.sh
+  export NVM_DIR=${NVM_DIR:-$HOME/.nvm}
+  local f
+  for f in $NVM_DIR/nvm.sh /opt/homebrew/opt/nvm/nvm.sh /usr/local/opt/nvm/nvm.sh; do
+    [[ -s $f ]] && { source $f; break }
+  done
+  (( $+functions[nvm] )) || { print -u2 '找不到 nvm.sh'; return 1 }
   nvm "$@"
 }
 
-# --- conda 按需初始化（当前未使用，需要时执行 conda-init） ---
+# --- conda 按需初始化：conda-init [环境名] ---
 conda-init() {
-  local conda_sh=/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh
-  if [[ ! -f $conda_sh ]]; then
-    echo "找不到 $conda_sh"
-    return 1
-  fi
-  source "$conda_sh"
-  conda activate "${1:-base}"
+  local f
+  for f in /opt/homebrew/Caskroom/miniconda/base $HOME/miniconda3 $HOME/miniforge3 $HOME/anaconda3 /opt/conda; do
+    if [[ -f $f/etc/profile.d/conda.sh ]]; then
+      source $f/etc/profile.d/conda.sh
+      conda activate "${1:-base}"
+      return
+    fi
+  done
+  print -u2 '找不到 conda.sh'
+  return 1
 }
-
-# --- Codex 通过统一启动入口连接常驻代理 ---
-codex() {
-  "$HOME/.local/bin/codex-math" "$@"
-}
-
-# --- ZJU Connect LaunchAgent 管理 ---
-[[ -f "$HOME/.config/zju-connect/functions.zsh" ]] && source "$HOME/.config/zju-connect/functions.zsh"

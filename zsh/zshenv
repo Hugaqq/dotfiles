@@ -1,31 +1,29 @@
-# ~/.zshenv — 所有 zsh（含脚本、vim、tmux）都会读取，保持轻量。
-# 只放环境变量；交互配置在 ~/.zshrc，登录配置在 ~/.zprofile。
+# zshenv — 所有 zsh 都会读取（脚本、编辑器、工具调起的非交互 shell），保持轻量。
+# 只放环境变量；登录配置在 zprofile，交互配置在 zshrc。
 
-typeset -U path PATH            # 关键：PATH 自动去重，嵌套 shell 不会越叠越长
+skip_global_compinit=1          # Debian/Ubuntu：不让 /etc/zsh/zshrc 提前跑一遍 compinit
 
+typeset -U path PATH            # PATH 自动去重，嵌套 shell 不会越叠越长
 path=(
   $HOME/.local/bin
+  $HOME/.cargo/bin
   $HOME/.npm-global/bin
-  $HOME/.kimi-code/bin
-  $HOME/.antigravity/antigravity/bin
-  $HOME/.antigravity-ide/antigravity-ide/bin
+  $HOME/go/bin
   /opt/homebrew/opt/rustup/bin
   /opt/homebrew/bin
   /opt/homebrew/sbin
+  /home/linuxbrew/.linuxbrew/bin
   $path
 )
-export PATH
 
-# 编辑器与分页器
 export EDITOR=vim
 export VISUAL=vim
 export PAGER=less
 export LESS='-R -F -X'
+export BAT_THEME=ansi           # bat 跟随终端自身配色
 
-# bat 使用终端自身配色（iTerm2 里的 Catppuccin 会直接生效）
-export BAT_THEME=ansi
+# 这台机器私有的 PATH / 环境变量（不进 git）
+() { [[ -r $1 ]] && source $1 } ${${(%):-%N}:A:h}/local.zshenv
 
-# Homebrew
-export HOMEBREW_INSTALL_FROM_API=1
-export HOMEBREW_NO_ANALYTICS=1
-case ":$PATH:" in *:'/Users/qvanium/.botmux/bin':*) ;; *) export PATH='/Users/qvanium/.botmux/bin'":$PATH" ;; esac  # added by botmux installer
+path=($^path(N-/))              # 去掉这台机器上不存在的目录
+export PATH
