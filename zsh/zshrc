@@ -131,3 +131,7 @@ bindkey '^[[Z'    reverse-menu-complete
 # 10. 提示符（必须放在最后）
 # ============================================================
 eval "$(starship init zsh)"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/qvanium/.local/bin:$PATH"

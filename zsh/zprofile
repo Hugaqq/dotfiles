@@ -14,3 +14,7 @@ export HOMEBREW_PIP_INDEX_URL="http://mirrors.aliyun.com/pypi/simple"
 
 # OrbStack CLI 集成
 [[ -f "$HOME/.orbstack/shell/init.zsh" ]] && source "$HOME/.orbstack/shell/init.zsh"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/qvanium/.local/bin:$PATH"

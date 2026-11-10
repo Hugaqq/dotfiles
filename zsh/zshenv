@@ -28,3 +28,4 @@ export BAT_THEME=ansi
 # Homebrew
 export HOMEBREW_INSTALL_FROM_API=1
 export HOMEBREW_NO_ANALYTICS=1
+case ":$PATH:" in *:'/Users/qvanium/.botmux/bin':*) ;; *) export PATH='/Users/qvanium/.botmux/bin'":$PATH" ;; esac  # added by botmux installer

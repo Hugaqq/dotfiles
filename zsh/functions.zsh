@@ -55,32 +55,9 @@ conda-init() {
   conda activate "${1:-base}"
 }
 
-# --- codex：跟随系统代理（与桌面 App 一致），可用 CODEX_PROXY 覆盖 ---
+# --- Codex 通过统一启动入口连接常驻代理 ---
 codex() {
-  local proxy="${CODEX_PROXY:-}"
-
-  if [[ -z $proxy ]]; then
-    proxy=$(scutil --proxy 2>/dev/null | awk -F' *: *' '
-      /HTTPSEnable/ { en = $2 }
-      /HTTPSProxy/  { host = $2 }
-      /HTTPSPort/   { port = $2 }
-      END { if (en == 1 && host != "" && port != "") print host ":" port }')
-  fi
-
-  if [[ -n $proxy ]]; then
-    env \
-      HTTP_PROXY="http://$proxy" \
-      HTTPS_PROXY="http://$proxy" \
-      ALL_PROXY="http://$proxy" \
-      NO_PROXY="localhost,127.0.0.1,::1" \
-      http_proxy="http://$proxy" \
-      https_proxy="http://$proxy" \
-      all_proxy="http://$proxy" \
-      no_proxy="localhost,127.0.0.1,::1" \
-      "$HOME/.local/bin/codex-math" "$@"
-  else
-    "$HOME/.local/bin/codex-math" "$@"
-  fi
+  "$HOME/.local/bin/codex-math" "$@"
 }
 
 # --- ZJU Connect LaunchAgent 管理 ---
