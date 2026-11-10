@@ -49,6 +49,10 @@ link zsh/zshrc      .zshrc
 link tmux/tmux.conf .tmux.conf
 link .vimrc         .vimrc
 link ghostty/config .config/ghostty/config
+# iTerm2（只在 macOS 上装了 iTerm2 时）：深色配置作为 Dynamic Profile 自动加载
+if [ -d "/Applications/iTerm.app" ]; then
+  link iterm2/dark.json "Library/Application Support/iTerm2/DynamicProfiles/dark.json"
+fi
 
 echo "zsh 插件："
 if command -v git >/dev/null; then

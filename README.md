@@ -34,6 +34,7 @@ zsh/
   local.zshenv   # 这台机器私有的 PATH、环境变量（git 忽略）
 tmux/tmux.conf   # C-a 前缀、鼠标、vi 复制模式
 ghostty/config   # 终端模拟器：主题、字号（Ghostty，macOS / Linux 通用）
+iterm2/dark.json # iTerm2 深色配置（Dynamic Profile，与 Ghostty 同色）
 starship.toml    # 提示符
 .vimrc           # 不装插件也能用；装了 vim-plug 后插件自动生效
 install.sh
@@ -44,6 +45,8 @@ install.sh
 提示符、tmux、vim 都只用终端自带的 16 色，所以整体配色只由终端模拟器决定。
 用 Ghostty 的话改 `ghostty/config` 里的 `theme` 一行即可（`ghostty +list-themes` 可以带预览地挑）；
 用别的终端就在那个终端里换主题，其余部分会自动跟着变。
+iTerm2 的深色配置 `iterm2/dark.json` 由 install.sh 链接进 iTerm2 的 DynamicProfiles 目录，出现在配置列表里叫 "Dark"；
+要设成默认：Settings → Profiles → 选中 Dark → Other Actions → Set as Default。
 
 ## 可选工具
 
